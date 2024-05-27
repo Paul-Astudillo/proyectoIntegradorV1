@@ -91,37 +91,6 @@ void matToBitmap(JNIEnv * env, cv::Mat src, jobject bitmap, jboolean needPremult
         return;
     }
 }
-
-extern "C" JNIEXPORT void JNICALL
-Java_com_example_aplicacionnativa_MainActivity_detectorBordes(
-        JNIEnv* env,
-        jobject /*this*/,
-        jobject bitmapIn,
-        jobject bitmapOut) {
-    cv::Mat src;
-    cv::Mat tmp;
-    cv::Mat bordes;
-    bitmapToMat(env, bitmapIn, src, false);
-    cv::cvtColor(src, tmp, cv::COLOR_BGR2GRAY);
-    cv::Laplacian(tmp, bordes, CV_16S, 3);
-    cv::convertScaleAbs(bordes, bordes);
-    matToBitmap(env, bordes, bitmapOut, false);
-}
-extern "C" JNIEXPORT jstring JNICALL
-Java_com_example_aplicacionnativa_MainActivity_stringFromJNI(JNIEnv *env, jobject /* this */) {
-    int a = 0;
-    int b = 1;
-    int c = 0;
-    stringstream ss;
-    ss << a << "," << b << ",";
-    for (int i = 0; i < 60; i++) {
-        c = a + b;
-        a = b;
-        b = c;
-        ss << c << ",";
-    }
-    return env->NewStringUTF(ss.str().c_str());
-}
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_example_aplicacionnativa_MainActivity_fuego(
@@ -135,47 +104,31 @@ Java_com_example_aplicacionnativa_MainActivity_fuego(
     bitmapToMat(env, fotoObj, fotoMat, false);
     bitmapToMat(env, imagenObj, imagenMat, false);
 
-// Asegurarse de que las imágenes tengan el mismo tamaño
-    resize(imagenMat, imagenMat, fotoMat.size());
-
-// Crear una matriz para almacenar el resultado de la operación bitwise_and
-    Mat imagenCombinada;
-
-// Realizar la operación bitwise_and
-    bitwise_and(fotoMat, imagenMat, imagenCombinada);
-
-// Convertir la imagen combinada de Mat a Bitmap y asignarla al objeto Bitmap resultado
-    matToBitmap(env, imagenCombinada, resultadoObj, false);
-
-    
-}
-
-extern "C"
-JNIEXPORT void JNICALL
-Java_com_example_aplicacionnativa_MainActivity_agua(
-        JNIEnv* env,
-        jobject /* this */,
-        jobject fotoObj,
-        jobject imagenObj,
-        jobject resultadoObj) {
-
-    // Convertir los objetos Bitmap de entrada a matrices Mat de OpenCV
-    Mat fotoMat, imagenMat;
-    bitmapToMat(env, fotoObj, fotoMat, false);
-    bitmapToMat(env, imagenObj, imagenMat, false);
-
     // Asegurarse de que las imágenes tengan el mismo tamaño
     resize(imagenMat, imagenMat, fotoMat.size());
 
-    // Crear una matriz para almacenar el resultado de la combinación ponderada
-    Mat imagenCombinada;
+    // Crear una imagen para almacenar el resultado
+    Mat imagenCombinada = fotoMat.clone();
 
-    // Realizar la combinación ponderada (blending)
+    // Definir un umbral de tolerancia para considerar un píxel como blanco o cercano a blanco
+    int umbralBlanco = 200;
 
-    addWeighted(fotoMat, 0.7, imagenMat, 0.5, 0, imagenCombinada);
+    // Recorrer los píxeles de la imagen y aplicar los valores de la imagen de agua a los píxeles blancos o cercanos a blanco
+    for (int i = 0; i < fotoMat.rows; ++i) {
+        for (int j = 0; j < fotoMat.cols; ++j) {
+            Vec3b colorFoto = fotoMat.at<Vec3b>(i, j);
+            if (colorFoto[0] > umbralBlanco && colorFoto[1] > umbralBlanco && colorFoto[2] > umbralBlanco) {
+                // Aplicar los valores de la imagen de agua
+                Vec3b colorImagen = imagenMat.at<Vec3b>(i, j);
+                imagenCombinada.at<Vec3b>(i, j) = colorImagen;
+            }
+        }
+    }
 
     // Convertir la imagen combinada de Mat a Bitmap y asignarla al objeto Bitmap resultado
     matToBitmap(env, imagenCombinada, resultadoObj, false);
+
+
 }
 
 extern "C"
@@ -185,8 +138,6 @@ Java_com_example_aplicacionnativa_MainActivity_quitarFondo(
         jobject /* this */,
         jobject fotoObj,
         jobject resultadoObj){
-
-
 
     // Convertir los objetos Bitmap de entrada a matrices Mat de OpenCV
     Mat fotoMat, resultadoMat;
@@ -227,3 +178,32 @@ Java_com_example_aplicacionnativa_MainActivity_quitarFondo(
 
 
 
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_example_aplicacionnativa_MainActivity_bordes(
+        JNIEnv* env,
+        jobject /* this */,
+        jobject fotoObj,
+        jobject resultadoObj,
+        jint umbral){
+
+    // Convertir los objetos Bitmap de entrada a matrices Mat de OpenCV
+    Mat fotoMat, resultadoMat;
+    bitmapToMat(env, fotoObj, fotoMat, false);
+
+    // Convertir la imagen de entrada a espacio de color LAB
+    Mat labMat;
+    cvtColor(fotoMat, labMat, COLOR_BGR2Lab);
+
+    // Extraer el canal A
+    vector<Mat> lab_planes;
+    split(labMat, lab_planes);
+    Mat A = lab_planes[1];
+
+    // Aplicar la binarización por umbral de color en el canal A
+    Mat binarizada;
+    threshold(A, binarizada, umbral, 255, THRESH_BINARY);
+
+    // Convertir el resultado binarizado a Bitmap y asignarlo al objeto resultado
+    matToBitmap(env, binarizada, resultadoObj, false);
+}

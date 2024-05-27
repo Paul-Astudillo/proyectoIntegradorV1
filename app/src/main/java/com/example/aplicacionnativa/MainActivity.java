@@ -5,6 +5,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+import android.app.ActivityManager;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
@@ -13,6 +14,8 @@ import android.graphics.drawable.BitmapDrawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.view.SurfaceView;
 import android.view.View;
@@ -29,10 +32,12 @@ import org.opencv.android.Utils;
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -56,10 +61,15 @@ public class MainActivity extends AppCompatActivity{
 //detector de bordes
     private ActivityMainBinding binding;
 
-    private android.widget.Button botonCombinarFuego ,btnCapturar , btnAgua , btnEnviar , btnQuitar;
-    private android.widget.ImageView original, bordes , imagen , resultado , ultra , noFondo;
+    private android.widget.Button botonCombinarFuego ,btnCapturar  , btnEnviar , btnQuitar ;
+    private android.widget.ImageView original, fuego , resultado  , noFondo;
 
-    private EditText ip;
+    private EditText ip ;
+    private TextView textViewSystemInfo;
+    private Handler handler;
+    private Runnable runnable;
+
+
     private static final int REQUEST_CODE_PERMISSIONS = 101;
 
     @Override
@@ -71,9 +81,23 @@ public class MainActivity extends AppCompatActivity{
 
 
 
+        textViewSystemInfo = findViewById(R.id.textViewSystemInfo);
+        handler = new Handler(Looper.getMainLooper());
+
+        runnable = new Runnable() {
+            @Override
+            public void run() {
+                updateSystemInfo();
+                handler.postDelayed(this, 1000); // Actualizar cada segundo
+            }
+        };
+
+        handler.post(runnable);
+
+//Fuego
 
         original = findViewById(R.id.imageView);
-        imagen=findViewById(R.id.imageView2);
+        fuego=findViewById(R.id.imageView2);
 
 
         resultado=findViewById(R.id.imageView3);
@@ -85,15 +109,15 @@ public class MainActivity extends AppCompatActivity{
                 //tv.setText(stringFromJNI());
                 // Decodificando el recurso de bitmap
 
-                Bitmap tomada = ((BitmapDrawable) noFondo.getDrawable()).getBitmap();
-                Bitmap trasformacion = ((BitmapDrawable) imagen.getDrawable()).getBitmap();
+                Bitmap sinFondo = ((BitmapDrawable) noFondo.getDrawable()).getBitmap();
+                Bitmap trasformacion = ((BitmapDrawable) fuego.getDrawable()).getBitmap();
                 // Obtener los bitmaps de las imágenes
 
                 // Crear un nuevo bitmap para almacenar el resultado
-                Bitmap resultadoBitmap = Bitmap.createBitmap(tomada.getWidth(), tomada.getHeight(), tomada.getConfig());
+                Bitmap resultadoBitmap = Bitmap.createBitmap(sinFondo.getWidth(), sinFondo.getHeight(), sinFondo.getConfig());
 
                 // Llamar al método JNI para combinar las imágenes
-                fuego(tomada, trasformacion, resultadoBitmap);
+                fuego(sinFondo, trasformacion, resultadoBitmap);
 
                 // Mostrar el resultado en la vista resultado
                 resultado.setImageBitmap(resultadoBitmap);
@@ -148,30 +172,6 @@ public class MainActivity extends AppCompatActivity{
         }
 
 
-
-        ultra=findViewById(R.id.imageView4);
-        btnAgua = findViewById(R.id.button4);
-        btnAgua.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                // Cargar la imagen original
-                Bitmap tomada = ((BitmapDrawable) resultado.getDrawable()).getBitmap();
-                Bitmap trasformacion = ((BitmapDrawable) ultra.getDrawable()).getBitmap();
-                // Obtener los bitmaps de las imágenes
-
-                // Crear un nuevo bitmap para almacenar el resultado
-                Bitmap resultadoBitmap = Bitmap.createBitmap(tomada.getWidth(), tomada.getHeight(), tomada.getConfig());
-
-                // Llamar al método JNI para combinar las imágenes
-                agua(tomada, trasformacion, resultadoBitmap);
-
-                // Mostrar el resultado en la vista resultado
-                resultado.setImageBitmap(resultadoBitmap);
-
-
-
-            }
-        });
 
         // Solicitar permisos
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -266,12 +266,6 @@ public class MainActivity extends AppCompatActivity{
         });
 
 
-
-
-
-
-
-
         //tv.setText(stringFromJNI());
     }
 
@@ -322,18 +316,51 @@ public class MainActivity extends AppCompatActivity{
     }
 
 
+    private double getCpuUsage() {
+        try {
+            Process process = Runtime.getRuntime().exec("top -n 1");
+            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (line.contains("User") && line.contains("System")) {
+                    String[] toks = line.split("%");
+                    if (toks.length > 0) {
+                        String cpuUsage = toks[0].substring(toks[0].lastIndexOf(" ") + 1).trim();
+                        return Double.parseDouble(cpuUsage);
+                    }
+                }
+            }
+        } catch (IOException | NumberFormatException e) {
+            e.printStackTrace();
+        }
+        return 0.0;
+    }
+
+
+    private void updateSystemInfo() {
+        ActivityManager.MemoryInfo memoryInfo = new ActivityManager.MemoryInfo();
+        ActivityManager activityManager = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
+        activityManager.getMemoryInfo(memoryInfo);
+        long availableMemory = memoryInfo.availMem / 1048576L; // MB
+        long totalMemory = memoryInfo.totalMem / 1048576L; // MB
+        double cpuUsage = getCpuUsage();
+        String systemInfo = String.format("RAM: %d MB libres / %d MB totales\nCPU: %.2f%%", availableMemory, totalMemory, cpuUsage);
+        textViewSystemInfo.setText(systemInfo);
+    }
 
 
 
 
 
 
-    public native String stringFromJNI();
+
+
+
+
     public native void fuego(android.graphics.Bitmap foto, android.graphics.Bitmap imagen, android.graphics.Bitmap resultado);
 
-    public native void agua(android.graphics.Bitmap foto, android.graphics.Bitmap imagen, android.graphics.Bitmap resultado);
-
     public native void quitarFondo(android.graphics.Bitmap foto, android.graphics.Bitmap resultado);
+
 
 
 

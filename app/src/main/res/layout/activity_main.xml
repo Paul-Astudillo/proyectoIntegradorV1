@@ -9,77 +9,59 @@
 
     <Button
         android:id="@+id/button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="392dp"
-        android:layout_marginEnd="32dp"
-        android:text="Transformar"
+        android:layout_width="138dp"
+        android:layout_height="52dp"
+        android:layout_marginStart="232dp"
+        android:layout_marginTop="263dp"
+        android:layout_marginEnd="41dp"
+        android:text="Fuego"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
     <ImageView
         android:id="@+id/imageView"
         android:layout_width="136dp"
-        android:layout_height="134dp"
+        android:layout_height="122dp"
         android:layout_marginTop="80dp"
-        android:layout_marginEnd="248dp"
+        android:layout_marginEnd="236dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
     <Button
         android:id="@+id/button3"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="113dp"
+        android:layout_height="51dp"
+        android:layout_marginStart="54dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="258dp"
         android:text="CAMARA"
-        tools:layout_editor_absoluteX="36dp"
-        tools:layout_editor_absoluteY="16dp" />
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
 
     <ImageView
         android:id="@+id/imageView3"
-        android:layout_width="124dp"
-        android:layout_height="188dp"
-        android:layout_marginStart="160dp"
-        android:layout_marginEnd="127dp"
-        android:layout_marginBottom="82dp"
+        android:layout_width="130dp"
+        android:layout_height="159dp"
+        android:layout_marginStart="248dp"
+        android:layout_marginEnd="33dp"
+        android:layout_marginBottom="108dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
-
-    <Button
-        android:id="@+id/button4"
-        android:layout_width="133dp"
-        android:layout_height="49dp"
-        android:layout_marginStart="46dp"
-        android:layout_marginEnd="232dp"
-        android:layout_marginBottom="287dp"
-        android:text="Combinar"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="1.0"
         app:layout_constraintStart_toStartOf="parent" />
 
     <ImageView
         android:id="@+id/imageView2"
-        android:layout_width="119dp"
-        android:layout_height="161dp"
-        android:layout_marginStart="249dp"
-        android:layout_marginEnd="43dp"
-        android:layout_marginBottom="346dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_width="74dp"
+        android:layout_height="85dp"
+        android:layout_marginStart="268dp"
+        android:layout_marginTop="348dp"
         app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
         app:srcCompat="@drawable/aur" />
-
-    <ImageView
-        android:id="@+id/imageView4"
-        android:layout_width="114dp"
-        android:layout_height="150dp"
-        android:layout_marginStart="46dp"
-        android:layout_marginEnd="251dp"
-        android:layout_marginBottom="346dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:srcCompat="@drawable/ultra" />
 
     <Button
         android:id="@+id/button5"
@@ -87,26 +69,31 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="264dp"
         android:layout_marginEnd="58dp"
-        android:layout_marginBottom="16dp"
+        android:layout_marginBottom="32dp"
         android:text="Enviar"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent" />
 
     <EditText
         android:id="@+id/editTextText"
-        android:layout_width="210dp"
-        android:layout_height="47dp"
+        android:layout_width="222dp"
+        android:layout_height="53dp"
         android:layout_marginStart="22dp"
+        android:layout_marginTop="653dp"
         android:layout_marginEnd="179dp"
-        android:layout_marginBottom="14dp"
+        android:layout_marginBottom="32dp"
         android:ems="10"
         android:hint="Ingrese su IP:"
         android:inputType="text"
         android:text=""
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.0" />
 
     <Button
         android:id="@+id/button6"
@@ -115,7 +102,7 @@
         android:layout_marginStart="259dp"
         android:layout_marginTop="20dp"
         android:layout_marginEnd="58dp"
-        android:text="Fondo"
+        android:text="Quitar Fondo"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
@@ -129,8 +116,21 @@
         android:layout_marginEnd="44dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-         />
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/textViewSystemInfo"
+        android:layout_width="208dp"
+        android:layout_height="173dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="280dp"
+        android:layout_marginEnd="16dp"
+        android:text="RAM y CPU"
+        android:textSize="16sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>
