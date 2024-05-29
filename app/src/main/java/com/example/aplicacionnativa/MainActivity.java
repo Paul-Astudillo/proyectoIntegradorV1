@@ -93,6 +93,24 @@ public class MainActivity extends AppCompatActivity{
         };
 
         handler.post(runnable);
+        //  Quitar Fondo
+        noFondo= findViewById(R.id.imageView5);
+        btnQuitar = findViewById(R.id.button6);
+        btnQuitar.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                Bitmap tomada = ((BitmapDrawable) original.getDrawable()).getBitmap();
+
+                // Crear un nuevo bitmap vacío para almacenar el resultado
+                Bitmap resultado = Bitmap.createBitmap(tomada.getWidth(), tomada.getHeight(), Bitmap.Config.ARGB_8888);
+
+                quitarFondo(tomada, resultado);
+
+                noFondo.setImageBitmap(resultado);
+
+            }
+        });
 
 //Fuego
 
@@ -127,24 +145,7 @@ public class MainActivity extends AppCompatActivity{
             }
         });
 
-        noFondo= findViewById(R.id.imageView5);
-        btnQuitar = findViewById(R.id.button6);
-        btnQuitar.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-                Bitmap tomada = ((BitmapDrawable) original.getDrawable()).getBitmap();
-
-                // Crear un nuevo bitmap vacío para almacenar el resultado
-                Bitmap resultado = Bitmap.createBitmap(tomada.getWidth(), tomada.getHeight(), Bitmap.Config.ARGB_8888);
-
-                quitarFondo(tomada, resultado);
-
-                noFondo.setImageBitmap(resultado);
-
-            }
-        });
-
+//capturar imagen
         btnCapturar=findViewById(R.id.button3);
         btnCapturar.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -194,7 +195,7 @@ public class MainActivity extends AppCompatActivity{
             public void onClick(View v) {
                 ip = findViewById(R.id.editTextText);
                 String editTextIP = ip.getText().toString();
-//
+
                 Bitmap bitmap = ((BitmapDrawable) resultado.getDrawable()).getBitmap();
                guardarImagenPNG(bitmap);
 //
@@ -286,7 +287,7 @@ public class MainActivity extends AppCompatActivity{
         }
     }
 
-
+//guardar Imagen
     private void guardarImagenPNG(Bitmap imagen) {
         Bitmap bitmap = imagen;
         try {
@@ -310,7 +311,7 @@ public class MainActivity extends AppCompatActivity{
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 // Permisos concedidos
             } else {
-                Toast.makeText(this, "Permisos no concedidos, algunas funciones pueden no estar disponibles.", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Permisos no concedidos", Toast.LENGTH_SHORT).show();
             }
         }
     }
@@ -347,14 +348,6 @@ public class MainActivity extends AppCompatActivity{
         String systemInfo = String.format("RAM: %d MB libres / %d MB totales\nCPU: %.2f%%", availableMemory, totalMemory, cpuUsage);
         textViewSystemInfo.setText(systemInfo);
     }
-
-
-
-
-
-
-
-
 
 
     public native void fuego(android.graphics.Bitmap foto, android.graphics.Bitmap imagen, android.graphics.Bitmap resultado);

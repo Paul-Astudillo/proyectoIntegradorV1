@@ -91,6 +91,19 @@ void matToBitmap(JNIEnv * env, cv::Mat src, jobject bitmap, jboolean needPremult
         return;
     }
 }
+
+// Función para ajustar el contraste de una imagen
+void ajustarContraste(Mat& imagen, double alpha, int beta) {
+    // Iterar sobre cada pixel de la imagen para ajustar el contraste
+    for (int y = 0; y < imagen.rows; y++) {
+        for (int x = 0; x < imagen.cols; x++) {
+            for (int c = 0; c < imagen.channels(); c++) {
+                imagen.at<Vec3b>(y, x)[c] =
+                        saturate_cast<uchar>(alpha * imagen.at<Vec3b>(y, x)[c] + beta);
+            }
+        }
+    }
+}
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_example_aplicacionnativa_MainActivity_fuego(
@@ -99,7 +112,14 @@ Java_com_example_aplicacionnativa_MainActivity_fuego(
         jobject fotoObj ,
         jobject imagenObj,
         jobject resultadoObj) {
-// Convertir los objetos Bitmap de entrada a matrices Mat de OpenCV
+    // Inicializar la semilla para los números aleatorios
+    std::srand(std::time(nullptr));
+
+    // Generar valores aleatorios para alpha y beta
+    double alpha = 0.5 + static_cast<double>(std::rand()) / (static_cast<double>(RAND_MAX / 2.0)); // Alpha entre 0.5 y 2.5
+    int beta = std::rand() % 101 - 50; // Beta entre -50 y 50
+
+    // Convertir los objetos Bitmap de entrada a matrices Mat de OpenCV
     Mat fotoMat, imagenMat;
     bitmapToMat(env, fotoObj, fotoMat, false);
     bitmapToMat(env, imagenObj, imagenMat, false);
@@ -107,27 +127,17 @@ Java_com_example_aplicacionnativa_MainActivity_fuego(
     // Asegurarse de que las imágenes tengan el mismo tamaño
     resize(imagenMat, imagenMat, fotoMat.size());
 
+    // Ajustar el contraste de la imagen
+    ajustarContraste(fotoMat, alpha, beta);
+
     // Crear una imagen para almacenar el resultado
-    Mat imagenCombinada = fotoMat.clone();
+    Mat imagenCombinada;
 
-    // Definir un umbral de tolerancia para considerar un píxel como blanco o cercano a blanco
-    int umbralBlanco = 200;
-
-    // Recorrer los píxeles de la imagen y aplicar los valores de la imagen de agua a los píxeles blancos o cercanos a blanco
-    for (int i = 0; i < fotoMat.rows; ++i) {
-        for (int j = 0; j < fotoMat.cols; ++j) {
-            Vec3b colorFoto = fotoMat.at<Vec3b>(i, j);
-            if (colorFoto[0] > umbralBlanco && colorFoto[1] > umbralBlanco && colorFoto[2] > umbralBlanco) {
-                // Aplicar los valores de la imagen de agua
-                Vec3b colorImagen = imagenMat.at<Vec3b>(i, j);
-                imagenCombinada.at<Vec3b>(i, j) = colorImagen;
-            }
-        }
-    }
+    // Aplicar la operación AND entre las dos imágenes
+    bitwise_and(fotoMat, imagenMat, imagenCombinada);
 
     // Convertir la imagen combinada de Mat a Bitmap y asignarla al objeto Bitmap resultado
     matToBitmap(env, imagenCombinada, resultadoObj, false);
-
 
 }
 
@@ -176,34 +186,3 @@ Java_com_example_aplicacionnativa_MainActivity_quitarFondo(
     matToBitmap(env, result, resultadoObj, false);
 }
 
-
-
-extern "C"
-JNIEXPORT void JNICALL
-Java_com_example_aplicacionnativa_MainActivity_bordes(
-        JNIEnv* env,
-        jobject /* this */,
-        jobject fotoObj,
-        jobject resultadoObj,
-        jint umbral){
-
-    // Convertir los objetos Bitmap de entrada a matrices Mat de OpenCV
-    Mat fotoMat, resultadoMat;
-    bitmapToMat(env, fotoObj, fotoMat, false);
-
-    // Convertir la imagen de entrada a espacio de color LAB
-    Mat labMat;
-    cvtColor(fotoMat, labMat, COLOR_BGR2Lab);
-
-    // Extraer el canal A
-    vector<Mat> lab_planes;
-    split(labMat, lab_planes);
-    Mat A = lab_planes[1];
-
-    // Aplicar la binarización por umbral de color en el canal A
-    Mat binarizada;
-    threshold(A, binarizada, umbral, 255, THRESH_BINARY);
-
-    // Convertir el resultado binarizado a Bitmap y asignarlo al objeto resultado
-    matToBitmap(env, binarizada, resultadoObj, false);
-}
