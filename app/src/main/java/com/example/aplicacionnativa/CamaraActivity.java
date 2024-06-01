@@ -19,10 +19,13 @@ import org.opencv.android.Utils;
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import android.Manifest;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 import org.opencv.imgproc.Imgproc;
 
@@ -36,32 +39,42 @@ public class CamaraActivity extends CameraActivity {
     private Mat rotarimagen;
     private ImageView imageView;
     private Button btnCapturar;
+    private TextView fpsTextView;
+    private Handler handler = new Handler(Looper.getMainLooper());
+    private long frameCount = 0;
+    private long startTime;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_camara);
 
+
         getPermission();
         cameraBridgeViewBase=findViewById(R.id.cameraView);
         imageView=findViewById(R.id.imageView);
+        fpsTextView = findViewById(R.id.fpsTextView);
 
         cameraBridgeViewBase.setCvCameraViewListener(new CameraBridgeViewBase.CvCameraViewListener2() {
             @Override
             public void onCameraViewStarted(int width, int height) {
                 mframe= new Mat();
+                startTime = System.currentTimeMillis();
+                handler.post(updateFpsRunnable);
 
             }
 
             @Override
             public void onCameraViewStopped() {
                 mframe.release();
+                handler.removeCallbacks(updateFpsRunnable);
 
             }
 
             @Override
             public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputFrame) {
                 mframe = inputFrame.rgba();
+                frameCount++;
                 return mframe;
             }
         });
@@ -79,12 +92,6 @@ public class CamaraActivity extends CameraActivity {
                 Log.e("Matriz", "ENTROOOO");
                 startActivity( intent );
 
-
-
-
-
-
-
             }
         });
 
@@ -92,6 +99,19 @@ public class CamaraActivity extends CameraActivity {
             cameraBridgeViewBase.enableView();
         }
         }
+
+    private Runnable updateFpsRunnable = new Runnable() {
+        @Override
+        public void run() {
+            long currentTime = System.currentTimeMillis();
+            long elapsedTime = currentTime - startTime;
+            if (elapsedTime > 0) {
+                int fps = (int) (frameCount / (elapsedTime / 1000.0));
+                fpsTextView.setText(String.format("FPS: %d", fps));
+            }
+            handler.postDelayed(this, 1000);
+        }
+    };
 
     @Override
     protected List<? extends CameraBridgeViewBase> getCameraViewList() {
@@ -136,24 +156,24 @@ public class CamaraActivity extends CameraActivity {
 
     private void captureImage() {
         if (mframe != null && !mframe.empty()) {
-            // Rotar la imagen
+            // romatos la imagen
             rotarimagen = new Mat();
             Core.rotate(mframe, rotarimagen, Core.ROTATE_90_CLOCKWISE);
 
-            // Escalar la imagen para agrandarla
-            int scaleFactor = 2; // Factor de escala, ajusta según sea necesario
+            // cambiamos la escala de la imagen
+            int scaleFactor = 2;
             int newWidth = rotarimagen.cols() * scaleFactor;
             int newHeight = rotarimagen.rows() * scaleFactor;
             Mat scaledMat = new Mat();
             Imgproc.resize(rotarimagen, scaledMat, new org.opencv.core.Size(newWidth, newHeight));
 
-            // Crear un Bitmap del tamaño de la imagen escalada
+            //bitmap del tamaño de la imagen escalada
             Bitmap bitmap = Bitmap.createBitmap(newWidth, newHeight, Bitmap.Config.ARGB_8888);
             Utils.matToBitmap(scaledMat, bitmap);
 
-            // Mostrar el Bitmap en el ImageView
+            // bitmap en el ImageView
             imageView.setImageBitmap(bitmap);
-            imageView.setScaleType(ImageView.ScaleType.FIT_CENTER); // Ajusta según sea necesario
+            imageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
         } else {
             Toast.makeText(this, "Error al capturar la imagen", Toast.LENGTH_SHORT).show();
         }

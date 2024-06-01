@@ -92,17 +92,13 @@ void matToBitmap(JNIEnv * env, cv::Mat src, jobject bitmap, jboolean needPremult
     }
 }
 
-// Función para ajustar el contraste de una imagen
 void ajustarContraste(Mat& imagen, double alpha, int beta) {
-    // Iterar sobre cada pixel de la imagen para ajustar el contraste
-    for (int y = 0; y < imagen.rows; y++) {
-        for (int x = 0; x < imagen.cols; x++) {
-            for (int c = 0; c < imagen.channels(); c++) {
-                imagen.at<Vec3b>(y, x)[c] =
-                        saturate_cast<uchar>(alpha * imagen.at<Vec3b>(y, x)[c] + beta);
-            }
-        }
-    }
+
+    Mat nuevaImagen = Mat::zeros(imagen.size(), imagen.type());
+
+    addWeighted(imagen, alpha, nuevaImagen, 0, beta, nuevaImagen);
+
+    imagen = nuevaImagen;
 }
 extern "C"
 JNIEXPORT void JNICALL
@@ -112,34 +108,33 @@ Java_com_example_aplicacionnativa_MainActivity_fuego(
         jobject fotoObj ,
         jobject imagenObj,
         jobject resultadoObj) {
-    // Inicializar la semilla para los números aleatorios
-    std::srand(std::time(nullptr));
+    std::srand(static_cast<unsigned int>(std::time(nullptr)));
 
-    // Generar valores aleatorios para alpha y beta
-    double alpha = 0.5 + static_cast<double>(std::rand()) / (static_cast<double>(RAND_MAX / 2.0)); // Alpha entre 0.5 y 2.5
+    //Valores aleatorios para alpha y beta
+    double alpha = 0.5 + static_cast<double>(std::rand()) / (static_cast<double>(RAND_MAX / 2.0));
     int beta = std::rand() % 101 - 50; // Beta entre -50 y 50
 
-    // Convertir los objetos Bitmap de entrada a matrices Mat de OpenCV
+
     Mat fotoMat, imagenMat;
     bitmapToMat(env, fotoObj, fotoMat, false);
     bitmapToMat(env, imagenObj, imagenMat, false);
 
     // Asegurarse de que las imágenes tengan el mismo tamaño
-    resize(imagenMat, imagenMat, fotoMat.size());
+    if (fotoMat.size() != imagenMat.size()) {
+        resize(imagenMat, imagenMat, fotoMat.size());
+    }
 
-    // Ajustar el contraste de la imagen
+    // Ajustar contraste
     ajustarContraste(fotoMat, alpha, beta);
 
-    // Crear una imagen para almacenar el resultado
     Mat imagenCombinada;
 
-    // Aplicar la operación AND entre las dos imágenes
+    //AND entre las dos imágenes
     bitwise_and(fotoMat, imagenMat, imagenCombinada);
 
-    // Convertir la imagen combinada de Mat a Bitmap y asignarla al objeto Bitmap resultado
     matToBitmap(env, imagenCombinada, resultadoObj, false);
-
 }
+
 
 extern "C"
 JNIEXPORT void JNICALL
@@ -182,7 +177,7 @@ Java_com_example_aplicacionnativa_MainActivity_quitarFondo(
     rgba_planes[3] = mask;
     merge(rgba_planes, result);
 
-    // Convertir la imagen resultante de Mat a Bitmap y asignarla al objeto Bitmap resultado
+
     matToBitmap(env, result, resultadoObj, false);
 }
 

@@ -13,6 +13,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Debug;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
@@ -54,11 +55,9 @@ public class MainActivity extends AppCompatActivity{
     }
 
     //camara
-    private CameraBridgeViewBase mOpenCvCameraView;
     private Mat mframe;
     private ImageView imageView;
 
-//detector de bordes
     private ActivityMainBinding binding;
 
     private android.widget.Button botonCombinarFuego ,btnCapturar  , btnEnviar , btnQuitar ;
@@ -93,7 +92,7 @@ public class MainActivity extends AppCompatActivity{
         };
 
         handler.post(runnable);
-        //  Quitar Fondo
+        //  Quitar fondo
         noFondo= findViewById(R.id.imageView5);
         btnQuitar = findViewById(R.id.button6);
         btnQuitar.setOnClickListener(new View.OnClickListener() {
@@ -102,7 +101,6 @@ public class MainActivity extends AppCompatActivity{
 
                 Bitmap tomada = ((BitmapDrawable) original.getDrawable()).getBitmap();
 
-                // Crear un nuevo bitmap vacío para almacenar el resultado
                 Bitmap resultado = Bitmap.createBitmap(tomada.getWidth(), tomada.getHeight(), Bitmap.Config.ARGB_8888);
 
                 quitarFondo(tomada, resultado);
@@ -112,8 +110,7 @@ public class MainActivity extends AppCompatActivity{
             }
         });
 
-//Fuego
-
+//Fuego con el AND
         original = findViewById(R.id.imageView);
         fuego=findViewById(R.id.imageView2);
 
@@ -125,19 +122,16 @@ public class MainActivity extends AppCompatActivity{
             @Override
             public void onClick(View view) {
                 //tv.setText(stringFromJNI());
-                // Decodificando el recurso de bitmap
+
 
                 Bitmap sinFondo = ((BitmapDrawable) noFondo.getDrawable()).getBitmap();
                 Bitmap trasformacion = ((BitmapDrawable) fuego.getDrawable()).getBitmap();
-                // Obtener los bitmaps de las imágenes
 
-                // Crear un nuevo bitmap para almacenar el resultado
                 Bitmap resultadoBitmap = Bitmap.createBitmap(sinFondo.getWidth(), sinFondo.getHeight(), sinFondo.getConfig());
 
-                // Llamar al método JNI para combinar las imágenes
+                // metodo fuego
                 fuego(sinFondo, trasformacion, resultadoBitmap);
 
-                // Mostrar el resultado en la vista resultado
                 resultado.setImageBitmap(resultadoBitmap);
 
 
@@ -166,15 +160,12 @@ public class MainActivity extends AppCompatActivity{
 
             captureImage();
 
-            // Ahora puedes usar la matriz Mat m como desees
         } else {
             // Manejar el caso en el que la dirección de memoria es nula
             Log.e("Matriz", "La dirección de memoria es nula");
         }
 
-
-
-        // Solicitar permisos
+        // Solicita permisos
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
                     != PackageManager.PERMISSION_GRANTED) {
@@ -183,11 +174,7 @@ public class MainActivity extends AppCompatActivity{
         }
 
 
-
-
-
-
-//Enviar
+//enviar
 
         btnEnviar =findViewById(R.id.button5);
         btnEnviar.setOnClickListener(new View.OnClickListener() {
@@ -198,11 +185,8 @@ public class MainActivity extends AppCompatActivity{
 
                 Bitmap bitmap = ((BitmapDrawable) resultado.getDrawable()).getBitmap();
                guardarImagenPNG(bitmap);
-//
-//                Log.e("Matriz", editTextIP);
-//                enviarServer(editTextIP);
 
-
+//Necesitamos un hilo secundario ya que no se puede ejecutar en el hilo principal
                 new Thread(new Runnable() {
                     @Override
                     public void run() {
@@ -287,7 +271,7 @@ public class MainActivity extends AppCompatActivity{
         }
     }
 
-//guardar Imagen
+//guardar imagen
     private void guardarImagenPNG(Bitmap imagen) {
         Bitmap bitmap = imagen;
         try {
@@ -309,32 +293,11 @@ public class MainActivity extends AppCompatActivity{
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == REQUEST_CODE_PERMISSIONS) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                // Permisos concedidos
+                // Si Permisos
             } else {
                 Toast.makeText(this, "Permisos no concedidos", Toast.LENGTH_SHORT).show();
             }
         }
-    }
-
-
-    private double getCpuUsage() {
-        try {
-            Process process = Runtime.getRuntime().exec("top -n 1");
-            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-            String line;
-            while ((line = reader.readLine()) != null) {
-                if (line.contains("User") && line.contains("System")) {
-                    String[] toks = line.split("%");
-                    if (toks.length > 0) {
-                        String cpuUsage = toks[0].substring(toks[0].lastIndexOf(" ") + 1).trim();
-                        return Double.parseDouble(cpuUsage);
-                    }
-                }
-            }
-        } catch (IOException | NumberFormatException e) {
-            e.printStackTrace();
-        }
-        return 0.0;
     }
 
 
@@ -344,8 +307,12 @@ public class MainActivity extends AppCompatActivity{
         activityManager.getMemoryInfo(memoryInfo);
         long availableMemory = memoryInfo.availMem / 1048576L; // MB
         long totalMemory = memoryInfo.totalMem / 1048576L; // MB
-        double cpuUsage = getCpuUsage();
-        String systemInfo = String.format("RAM: %d MB libres / %d MB totales\nCPU: %.2f%%", availableMemory, totalMemory, cpuUsage);
+
+        Debug.MemoryInfo appMemoryInfo = new Debug.MemoryInfo();
+        Debug.getMemoryInfo(appMemoryInfo);
+        int appTotalMemory = appMemoryInfo.getTotalPss() / 1024; // megaBytes
+
+        String systemInfo = String.format("RAM: %d MB libres / %d MB totales\nMemoria App: %d MB", availableMemory, totalMemory, appTotalMemory);
         textViewSystemInfo.setText(systemInfo);
     }
 
